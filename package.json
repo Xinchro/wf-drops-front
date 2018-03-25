@@ -1,0 +1,25 @@
+{
+  "name": "wf-drops-front",
+  "version": "0.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "css": "scss src/client/style.scss src/client/style.css",
+    "sync:live": "aws s3 sync ./ s3://wf-drops.xinchronize.com",
+    "sync:staging": "aws s3 sync ./ s3://wf-drops-staging.xinchronize.com",
+    "host:data": "http-server tmp -p 8080 --cors",
+    "host:client": "http-server src/client -p 80",
+    "build:watch": "npm run css",
+    "watch:all": "watch-spawn -i -p \"./**/*.+(js|scss|html)\" npm run build:watch",
+    "dev": "run-p watch:all host:data host:client",
+    "start": "npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Xinchro",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "npm-run-all": "^4.1.1",
+    "watch-spawn": "^2.0.0"
+  }
+}
