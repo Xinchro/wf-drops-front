@@ -24,6 +24,8 @@
     "vue-router": "^3.0.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-loader": "^7.1.4",
     "npm-run-all": "^4.1.1",
     "watch-spawn": "^2.0.0",
     "webpack": "^4.3.0",
