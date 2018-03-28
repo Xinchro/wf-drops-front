@@ -6,54 +6,7 @@ let sectionSearchWorker = new Worker("searchSections.js")
 let app = new Vue({
   el: '#vue-wrapper',
   data: {
-    filters: [
-      // { name: "glossary",
-      //   id: 0 },
-      { name: "missionRewards",
-        label: "Mission Rewards",
-        id: 1,
-        on: true },
-      { name: "relicRewards",
-        label: "Relic Rewards",
-        id: 2,
-        on: true },
-      { name: "keyRewards",
-        label: "Key Rewards",
-        id: 3,
-        on: true },
-      { name: "dynamicRewards",
-        label: "Dynamic Location Rewards",
-        id: 4,
-        on: true },
-      { name: "sortiesRewards",
-        label: "Sorties Rewards",
-        id: 5,
-        on: true },
-      { name: "bountyRewards",
-        label: "Cetus Bounty Rewards",
-        id: 6,
-        on: true },
-      { name: "modsByMod",
-        label: "Mods by Mod",
-        id: 7,
-        on: true },
-      { name: "modsByEnemy",
-        label: "Mods by Enemy",
-        id: 8,
-        on: true },
-      { name: "blueprintsByBlueprint",
-        label: "Blueprints by Blueprint",
-        id: 9,
-        on: true },
-      { name: "blueprintsByEnemy",
-        label: "Blueprints by Enemy",
-        id: 10,
-        on: true },
-      { name: "miscDrops",
-        label: "Miscellaneous",
-        id: 11,
-        on: true }
-    ],
+    filters: [],
     menuVisible: false,
     dropdata: {},
     filteredData: {},
@@ -84,13 +37,15 @@ let app = new Vue({
         }
       }
 
-      // set prefered filters first, then apply query params (if they exist)
-      // query overwrites for link sharing purposes
-      this.setFilters(this.arrayFromString(this.doLocalStorage("get", "filters")))
-      .then(() => {
-        this.loadParams()
-        this.updateCurrentFilters()
-      })
+      // generate filter list based on the index endpoint
+      this.genFilters()
+        // set prefered filters first, then apply query params (if they exist)
+        // query overwrites for link sharing purposes
+        .then(this.setFilters(this.arrayFromString(this.doLocalStorage("get", "filters"))))
+        .then(() => {
+          this.loadParams()
+          this.updateCurrentFilters()
+        })
 
       // set preferred theme
       this.setTheme(this.doLocalStorage("get", "theme"))
@@ -107,7 +62,7 @@ let app = new Vue({
         if(name) {
           const xmlHttp = new XMLHttpRequest()
 
-          xmlHttp.onreadystatechange = () => { 
+          xmlHttp.onreadystatechange = () => {
             if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
               resolve(JSON.parse(xmlHttp.responseText))
             } else if (xmlHttp.status == 404) {
@@ -308,9 +263,9 @@ let app = new Vue({
     },
 
     updateCurrentFilters(filterID) {
-      if(filterID) {
-        this.filters[filterID-1].on = this.checkbox(filterID).checked = !this.checkbox(filterID).checked
-        this.gaEvent("toggleFilter", "click", this.filters[filterID-1].name)
+      if(filterID != undefined) {
+        this.filters[filterID].on = this.checkbox(filterID).checked = !this.checkbox(filterID).checked
+        this.gaEvent("toggleFilter", "click", this.filters[filterID].name)
       }
 
       renderStart = 0
@@ -395,7 +350,7 @@ let app = new Vue({
     updateRelated(data) {
       let relicRanks = ["(Intact)","(Exceptional)","(Flawless)","(Radiant)"]
       let includingTitles = []
-      
+
       let element = this.getScrollerElement(data)
 
       let title = data.replace("", "").toLowerCase()
@@ -550,6 +505,25 @@ let app = new Vue({
       })
     },
 
+    genFilters() {
+      // get index
+      return this.getData("index")
+        .then((response) =>{
+          // get endpoint array
+          const endpoints = response.endpoints
+
+          this.filters = endpoints.map((endpoint, index) => {
+            // create filters
+            return {
+              name: endpoint.name.replace(".json", ""),
+              label: endpoint.displayName,
+              id: index,
+              on: true
+            }
+          })
+        })
+    },
+
     setFilters(array) {
       return new Promise((resolve, reject)=>{
         if(typeof(array) === 'object') {
@@ -562,7 +536,7 @@ let app = new Vue({
           array.forEach(filterID => {
             // js is stupid and thinks NaN is a number, so check for that
             if(typeof(filterID) === 'number' && !isNaN(filterID)) {
-              this.filters[filterID-1].on = true
+              if(this.filters[filterID]) this.filters[filterID].on = true
             }
           })
         }
@@ -577,11 +551,11 @@ let app = new Vue({
 
     gotoCrumb(crumbNo) {
       this.usedBreadcrumb = true // used a breadcrumb
-      if(this.crumbs.length > 0 
+      if(this.crumbs.length > 0
         && (this.crumbs.length - Math.abs(crumbNo)) > 0
         && (this.crumbs.slice(0, crumbNo).length) >= 0) {
         // checks to not break anything if values are exceeded
-        
+
         this.searchText = this.crumbs[crumbNo]
         this.crumbs = this.crumbs.slice(0, crumbNo+1)
 
