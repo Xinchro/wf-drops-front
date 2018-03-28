@@ -4,7 +4,8 @@
   "description": "",
   "main": "script.js",
   "scripts": {
-    "css": "scss src/client/style.scss src/client/style.css",
+    "dist:clear:": "rm -rf dist/*",
+    "build:sass": "scss src/style.scss dist/style.css",
     "sync:live": "aws s3 sync ./ s3://wf-drops.xinchronize.com",
     "sync:staging": "aws s3 sync ./ s3://wf-drops-staging.xinchronize.com",
     "host:data": "http-server tmp -p 8080 --cors",
@@ -12,7 +13,10 @@
     "build:watch": "npm run css",
     "watch:all": "watch-spawn -i -p \"./**/*.+(js|scss|html)\" npm run build:watch",
     "dev": "run-p watch:all host:data host:client",
-    "build:webpack": "webpack --config webpack.config.js",
+    "build:babel": "babel dist/bundle.js --out-file dist/bundle.js",
+    "build:webpack": "webpack  --mode=development",
+    "build:part1": "run-p dist:clear build:webpack build:sass",
+    "build:full": "run-s build:part1 build:babel",
     "start": "npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,9 +28,14 @@
     "vue-router": "^3.0.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.42",
+    "@babel/preset-env": "^7.0.0-beta.42",
     "babel-cli": "^6.26.0",
     "babel-loader": "^7.1.4",
+    "copy-webpack-plugin": "^4.5.1",
     "npm-run-all": "^4.1.1",
+    "vue-loader": "^14.2.2",
+    "vue-template-compiler": "^2.5.16",
     "watch-spawn": "^2.0.0",
     "webpack": "^4.3.0",
     "webpack-cli": "^2.0.13"
