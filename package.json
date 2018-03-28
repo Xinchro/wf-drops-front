@@ -18,7 +18,11 @@
   },
   "author": "Xinchro",
   "license": "ISC",
-  "dependencies": {},
+  "dependencies": {
+    "vue": "^2.5.16",
+    "vue-infinite-scroll": "^2.0.2",
+    "vue-router": "^3.0.1"
+  },
   "devDependencies": {
     "npm-run-all": "^4.1.1",
     "watch-spawn": "^2.0.0",
