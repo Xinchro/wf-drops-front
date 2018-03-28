@@ -12,6 +12,7 @@
     "build:watch": "npm run css",
     "watch:all": "watch-spawn -i -p \"./**/*.+(js|scss|html)\" npm run build:watch",
     "dev": "run-p watch:all host:data host:client",
+    "build:webpack": "webpack --config webpack.config.js",
     "start": "npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
