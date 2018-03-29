@@ -5,7 +5,7 @@
   "main": "script.js",
   "scripts": {
     "dist:clear:": "rm -rf dist/*",
-    "build:sass": "scss src/style.scss dist/style.css",
+    "build:sass": "scss src/style/main.scss dist/style.css",
     "sync:live": "aws s3 sync ./ s3://wf-drops.xinchronize.com",
     "sync:staging": "aws s3 sync ./ s3://wf-drops-staging.xinchronize.com",
     "host:data": "http-server tmp -p 8080 --cors",
