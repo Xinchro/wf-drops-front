@@ -75,27 +75,74 @@
       </li> <!-- section -->
     </ul> <!-- sections -->
 
-    <div v-infinite-scroll="addHead" infinite-scroll-disabled="busy" infinite-scroll-distance="50">
+    <div v-infinite-scroll="addHead" infinite-scroll-disabled="busy" infinite-scroll-distance="50" @click="addHead(filteredData)">
     </div>
 
   </section>
 </template>
 
 <script>
+  import { searchTitle } from "../utils/search.js"
+
   export default {
     data() {
       return {
+        renderedData: {},
+        renderLimits: {
+          start: 0,
+          end: 10
+        }
       }
     },
     props: [
-      "renderedData",
+      "filteredData",
       "resetRelated",
-      "searchTitle",
       "toggleRelated",
       "titleDrops",
-      "addHead",
     ],
+    watch: {
+      filteredData: function (value, oldValue) {
+        this.addHead(this.filteredData) // initial items visible
+      }
+    },
     methods: {
+      searchTitle(text) {
+        searchTitle(text)
+        this.addHead(this.filteredData)
+      },
+
+      addHead(filteredData) {
+        let renderedData = { sections: [] } // empty rendered data
+        if(filteredData) {
+          // if we have filtered sections
+          if(filteredData.sections && filteredData.sections.length > 0) {
+            // loop through until the render end limit
+            for (let i=0; i<this.renderLimits.end; i++) {
+              // if the section exists
+              if(filteredData.sections[i]) {
+                // push the section to the rendered data
+                renderedData.sections.push(filteredData.sections[i])
+              }
+            }
+
+            // if the filtered data has sections
+            if(filteredData.sections.length > 0) {
+              // if going over the end limit by 5 exceeds the amount of filtered sections
+              if(this.renderLimits.end+5 > filteredData.sections.length) {
+                // set the end limit to the amount of sections
+                this.renderLimits.end = filteredData.sections.length
+              } else { // if going over the end limit by 5 is still within the amount of filtered sections
+                // set the start limit to the end limit
+                this.renderLimits.start = this.renderLimits.end
+                // add 5 to the end limit
+                this.renderLimits.end += 5
+              }
+            }
+          }
+
+          this.$set(this, "renderedData", renderedData)
+        }
+      },
     }
   }
 </script>

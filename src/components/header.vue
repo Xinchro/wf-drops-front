@@ -1,8 +1,8 @@
 <template>
   <header class="header">
     <section class="search-wrapper">
-      <input class="search-bar" type="text" v-model="searchText" placeholder="Search..." @input="searchBar(searchText)">
-      <button class="search-button" @click="searchBar(searchText)">
+      <input class="search-bar" type="text" v-model="searchText" placeholder="Search..." @input="searchBar(searchText, dropdata)">
+      <button class="search-button" @click="searchBar(searchText, dropdata)">
         <i class="fa fa-search" aria-hidden="true"></i>
       </button>
     </section>
@@ -36,22 +36,187 @@
 </template>
 
 <script>
+  import {
+    arrayFromString,
+    doLocalStorage,
+    gaEvent,
+    getCheckbox,
+    getCurrentFiltersString,
+    getData,
+    getDataList
+  } from "../utils/utils.js"
+
+  import {
+    search,
+    searchRelated,
+    searchTitle
+  } from "../utils/search.js"
+
+  import {
+    setQueryParam
+  } from "../utils/querystring.js"
+
   export default {
     data() {
       return {
+        menuVisible: false,
+        searchText: "",
+        typingTimeout: {},
       }
     },
     props: [
-      "searchText",
-      "menuVisible",
+      "dropdata",
       "filters",
-      "toggleMenu",
-      "setTheme",
-      "searchBar",
-      "updateCurrentFilters",
-      "gaEvent",
+      "getCurrentFiltersString",
+      "loadParams",
+      "renderBoundries",
+      "setFilters",
+      "setFilterStates",
+      "setFilteredData",
+      "setSearchText",
+      "updateDropData"
     ],
+    mounted: function () {
+      // initiate header
+      this.$nextTick(function () {
+        // set preferred theme
+        this.setTheme(doLocalStorage("get", "theme"))
+
+        // generate filter list based on the index endpoint
+        this.genFilters()
+          .then(this.setFilters)
+          // set prefered filters first, then apply query params (if they exist)
+          // query overwrites for link sharing purposes
+          .then((filters) => {
+            this.setFilterStates(arrayFromString(doLocalStorage("get", "filters"), filters))} // last state
+          )
+          .then(() => {
+            this.loadParams() // load params from url
+            this.updateCurrentFilters() // update current filters to match params
+            setQueryParam("q", this.searchText) // update search query
+          })
+      })
+    },
+    watch: {
+      dropdata: function (value, oldValue) {
+        this.search(this.searchText, value) // initial search to fill out array
+      },
+      searchText: function (value, oldValue) {
+        this.setSearchText(value) // set search text
+      }
+    },
     methods: {
+      searchBar(text, dropdata) {
+        // wait a while before committing to a search, while typing
+        clearTimeout(this.typingTimeout)
+        this.typingTimeout = setTimeout(()=>{
+          this.search(text, dropdata)
+          // fire off a ga event to save the term tracked via input bar
+          gaEvent("search", "input", `bar - ${text ? text : "blank"}`, getCurrentFiltersString(this.filters))
+        }, 500)
+      },
+
+      setTheme(theme) {
+        // get wrapper
+        let element = document.getElementById("vue-wrapper")
+
+        // if we actually got it
+        if(element) {
+          // set the class to the theme
+          element.className = theme
+
+          // if the theme is dark, make it blank(light theme)
+          if (theme === "dark") {
+            element.className = ""
+          }
+        }
+
+        // save theme to storage
+        doLocalStorage("set", "theme", theme)
+
+        return theme
+      },
+
+      toggleMenu() {
+        this.menuVisible = !this.menuVisible
+      },
+
+      updateSearchResults() {
+        this.setFilteredData({ sections: [] }) // empty filtered data
+
+        getDataList(this.filters) // get fresh data
+          .then((data) => {
+            this.updateDropData(data) // update with fresh data
+          })
+      },
+
+      genFilters() {
+        return new Promise((res, rej) => {
+          // get index
+          return getData("index")
+            .then((response) =>{
+              // get endpoint array
+              const endpoints = response.endpoints
+
+              const structured = endpoints.map((endpoint, index) => {
+                // create filters
+                return {
+                  name: endpoint.name.replace(".json", ""),
+                  label: endpoint.displayName,
+                  id: index,
+                  on: true
+                }
+              })
+
+              res(structured)
+            })
+        })
+      },
+
+      searchItem(text, dropdata) {
+        search(text, dropdata)
+
+        // fire off a ga event to save the term tracked via input bar
+        gaEvent("search", "click", `item - ${text ? text : "blank"}`, getCurrentFiltersString(this.filters))
+      },
+
+      searchTitle(text, dropdata) {
+        searchTitle(text, dropdata)
+          .then(this.setFilteredData(searched))
+
+        // fire off a ga event for relics
+        gaEvent("search", "click", `title - ${isRelic ? "relic - " : "" }${newText ? newText : "blank"}`, getCurrentFiltersString(this.filters))
+      },
+
+      searchRelated(text, dropdata) {
+        searchRelated(text, dropdata)
+          .then(this.setFilteredData(searched))
+
+        // fire off a ga event for relics
+        gaEvent("search", "click", `related - ${isRelic ? "relic - " : "" }${newText ? newText : "blank"}`, getCurrentFiltersString(this.filters))
+      },
+
+      search(text, dropdata) {
+        search(text, dropdata)
+          .then(this.setFilteredData)
+      },
+
+      updateCurrentFilters(filterID) {
+        if(filterID != undefined) {
+          this.filters[filterID].on = getCheckbox(filterID).checked = !getCheckbox(filterID).checked
+          gaEvent("toggleFilter", "click", this.filters[filterID].name, getCurrentFiltersString(this.filters))
+        }
+
+        this.renderBoundries.start = 0
+        this.renderBoundries.end = 10
+
+        this.updateSearchResults()
+
+        let filterString = getCurrentFiltersString(this.filters)
+
+        setQueryParam("filters", filterString)
+        doLocalStorage("set", "filters", filterString)
+      },
     }
   }
 </script>
