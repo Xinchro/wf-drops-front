@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css?family=Oswald:400,700');
 
+
+[infinite-scroll-distance] {
+  height: 25px;
+  background: pink;
+}
+
 *, body {
   padding: 0;
   margin: 0;
@@ -253,7 +259,7 @@
           .filter-checkbox:not(:checked) ~ .filter-checkbox-box {
             color: #ba2323;
           }
-          
+
           .filter-checkbox:checked ~ .filter-checkbox-box {
             color: #19b719;
             border: none;
@@ -283,7 +289,7 @@
     * {
       padding: 10px;
     }
-    
+
     .sections {
       padding: 0;
       margin: 0;
@@ -331,7 +337,7 @@
               cursor: pointer;
             }
           }
-          
+
           .fa {
             font-size: 2em;
             align-content: center;
@@ -343,7 +349,7 @@
             &:hover {
               background:  #aebad0;
               margin: 0 1px 1px 0;
-              box-shadow: 
+              box-shadow:
                 1px 1px #8e9fbe;
               cursor: pointer;
             }
@@ -579,13 +585,13 @@
 
 @keyframes scrollLeft {
   0% {
-    transform: translateX(0%); 
+    transform: translateX(0%);
   }
   50% {
-    transform: translateX(-50%); 
+    transform: translateX(-50%);
   }
   100% {
-    transform: translateX(-100%); 
+    transform: translateX(-100%);
   }
 }
 
@@ -605,7 +611,7 @@
         // background: #C2C233;
       }
     }
-    
+
     .dark-light {
       .dark {
         background: #444;
@@ -644,7 +650,7 @@
           .filter-checkbox:not(:checked) ~ .filter-checkbox-box {
             color: #ba2323;
           }
-          
+
           .filter-checkbox:checked ~ .filter-checkbox-box {
             color: #19b719;
           }
@@ -663,7 +669,7 @@
       .section {
         .title-wrapper {
           background: #356bd6;
-          
+
           button {
             color: #222;
           }

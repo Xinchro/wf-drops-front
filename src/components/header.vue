@@ -1,8 +1,8 @@
 <template>
   <header class="header">
     <section class="search-wrapper">
-      <input class="search-bar" type="text" v-model="searchText" placeholder="Search..." @input="searchBar(searchText, dropdata)">
-      <button class="search-button" @click="searchBar(searchText, dropdata)">
+      <input class="search-bar" type="text" v-model="searchBarText" placeholder="Search..." @input="searchBar(searchBarText, dropdata)">
+      <button class="search-button" @click="searchBar(searchBarText, dropdata)">
         <i class="fa fa-search" aria-hidden="true"></i>
       </button>
     </section>
@@ -60,7 +60,7 @@
     data() {
       return {
         menuVisible: false,
-        searchText: "",
+        searchBarText: "",
         typingTimeout: {},
       }
     },
@@ -69,7 +69,7 @@
       "filters",
       "getCurrentFiltersString",
       "loadParams",
-      "renderBoundries",
+      "searchText",
       "setFilters",
       "setFilterStates",
       "setFilteredData",
@@ -93,7 +93,6 @@
           .then(() => {
             this.loadParams() // load params from url
             this.updateCurrentFilters() // update current filters to match params
-            setQueryParam("q", this.searchText) // update search query
           })
       })
     },
@@ -102,17 +101,18 @@
         this.search(this.searchText, value) // initial search to fill out array
       },
       searchText: function (value, oldValue) {
-        this.setSearchText(value) // set search text
+        this.searchBarText = value
       }
     },
     methods: {
       searchBar(text, dropdata) {
+        console.log(text)
         // wait a while before committing to a search, while typing
         clearTimeout(this.typingTimeout)
         this.typingTimeout = setTimeout(()=>{
           this.search(text, dropdata)
           // fire off a ga event to save the term tracked via input bar
-          gaEvent("search", "input", `bar - ${text ? text : "blank"}`, getCurrentFiltersString(this.filters))
+          gaEvent("search", "input", `bar - ${text ? text : "blank"}`)
         }, 500)
       },
 
@@ -173,13 +173,6 @@
         })
       },
 
-      searchItem(text, dropdata) {
-        search(text, dropdata)
-
-        // fire off a ga event to save the term tracked via input bar
-        gaEvent("search", "click", `item - ${text ? text : "blank"}`, getCurrentFiltersString(this.filters))
-      },
-
       searchTitle(text, dropdata) {
         searchTitle(text, dropdata)
           .then(this.setFilteredData(searched))
@@ -204,11 +197,8 @@
       updateCurrentFilters(filterID) {
         if(filterID != undefined) {
           this.filters[filterID].on = getCheckbox(filterID).checked = !getCheckbox(filterID).checked
-          gaEvent("toggleFilter", "click", this.filters[filterID].name, getCurrentFiltersString(this.filters))
+          gaEvent("toggleFilter", "click", this.filters[filterID].name)
         }
-
-        this.renderBoundries.start = 0
-        this.renderBoundries.end = 10
 
         this.updateSearchResults()
 

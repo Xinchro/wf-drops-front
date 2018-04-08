@@ -4,7 +4,7 @@
       :dropdata="dropdata"
       :filters="filters"
       :load-params="loadParams"
-      :render-boundries="renderBoundries"
+      :search-text="searchText"
       :set-search-text="setSearchText"
       :set-filters="setFilters"
       :set-filter-states="setFilterStates"
@@ -14,11 +14,11 @@
     </wf-header>
 
     <data-list
+      :dropdata="dropdata"
       :filtered-data="filteredData"
-      :reset-related="resetRelated"
-      :search-text="searchText"
-      :toggle-related="toggleRelated"
-      :title-drops="titleDrops"
+      :get-related="getRelated"
+      :set-filtered-data="setFilteredData"
+      :set-search-text="setSearchText"
     ></data-list>
 
     <wf-footer></wf-footer>
@@ -37,6 +37,10 @@
   } from "../utils/utils.js"
 
   import {
+    searchRelated
+  } from "../utils/search.js"
+
+  import {
     getQueryParams,
     setQueryParam
   } from "../utils/querystring.js"
@@ -49,14 +53,8 @@
         filteredData: { sections: [] },
         searchText: "",
         busy: false,
-        titleDrops: {},
-        showTitleDrops: false,
         crumbs: [],
-        usedBreadcrumb: false,
-        renderBoundries: {
-          start: 0,
-          end: 10
-        }
+        usedBreadcrumb: false
       }
     },
     beforeCreate: function () {
@@ -71,6 +69,7 @@
         // watcher for when user hits "back" on browser, or equiv.
         window.onpopstate = () => {
           this.loadParams()
+          this.searchText = this.searchText
           // make sure we can go back far enough
           // if(!this.gotoCrumb(this.crumbs.length-2)) {
           //   // if not, default to first crumb and reset array and query params
@@ -96,75 +95,9 @@
         this.$set(this, "filteredData", newData)
       },
 
-      resetRelated(data) {
-        let element = this.getScrollerElement(data)
-
-        element.className += " invisible"
-      },
-
-      getScrollerElement(data) {
-        return document.getElementById(`${data}-title-drop-scroller`)
-      },
-
       setSearchText(text) {
         this.$set(this, "searchText", text)
         return text
-      },
-
-      toggleRelated(data) {
-        let element = this.getScrollerElement(data)
-        if(element.className.includes("invisible")) {
-          this.updateRelated(data)
-        } else {
-          this.resetRelated(data)
-        }
-        gaEvent("toggleRelated", "click", data, this.getCurrentFiltersString(this.filters))
-      },
-
-      updateRelated(data) {
-        let relicRanks = ["(Intact)","(Exceptional)","(Flawless)","(Radiant)"]
-        let includingTitles = []
-
-        let element = this.getScrollerElement(data)
-
-        let title = data.replace("", "").toLowerCase()
-
-        this.$set(this.titleDrops, "data", "")
-
-        relicRanks.forEach(rank => {
-          if(data.toLowerCase().includes(rank.toLowerCase())) {
-            data = data.replace(rank, "").toLowerCase()
-          }
-        })
-
-        data = data.split(" ")
-
-        // new thread for search
-        sectionSearchWorker.postMessage([this.dropdata.sections, data])
-
-        // render data when search thread is complete
-        sectionSearchWorker.onmessage = (e) => {
-          e.data.forEach(section => {
-            if(!section.section.toLowerCase().includes(title.toLowerCase())) {
-              includingTitles.push(section.section)
-            }
-          })
-
-          if(includingTitles.length>0) {
-            this.$set(this.titleDrops, "data", includingTitles)
-          } else {
-            this.$set(this.titleDrops, "data", ["Nothing related"])
-          }
-
-          setTimeout(()=>{
-            element.className = element.className.replace(/ invisible/g, "")
-            if(includingTitles.length>0) {
-              element.children[1].children[0].style.animationDuration = `${element.offsetWidth/10}s` // picking titles in titles-wrapper
-            } else {
-              element.children[1].children[0].style.animationDuration = "0s"
-            }
-          },10)
-        }
       },
 
       loadParams() {
@@ -207,7 +140,7 @@
           this.searchText = this.crumbs[crumbNo]
           this.crumbs = this.crumbs.slice(0, crumbNo+1)
 
-          setQueryParam("q", this.searchText)
+          // setQueryParam("q", this.searchText)
 
           return true
         }
@@ -238,6 +171,56 @@
 
           resolve()
         })
+      },
+
+      getRelated(title) {
+        // console.log(data)
+        // console.log(data)
+        // let relicRanks = ["(Intact)","(Exceptional)","(Flawless)","(Radiant)"]
+        // let includingTitles = []
+
+        // let element = this.getScrollerElement(data)
+
+        return searchRelated(title, this.dropdata)
+          // .then(console.log)
+        // let title = data.replace("", "").toLowerCase()
+
+        // this.$set(this.titleDrops, "data", "")
+
+        // relicRanks.forEach(rank => {
+        //   if(data.toLowerCase().includes(rank.toLowerCase())) {
+        //     data = data.replace(rank, "").toLowerCase()
+        //   }
+        // })
+
+        // data = data.split(" ")
+
+        // // new thread for search
+        // sectionSearchWorker.postMessage([this.dropdata.sections, data])
+
+        // // render data when search thread is complete
+        // sectionSearchWorker.onmessage = (e) => {
+        //   e.data.forEach(section => {
+        //     if(!section.section.toLowerCase().includes(title.toLowerCase())) {
+        //       includingTitles.push(section.section)
+        //     }
+        //   })
+
+        //   if(includingTitles.length>0) {
+        //     this.$set(this.titleDrops, "data", includingTitles)
+        //   } else {
+        //     this.$set(this.titleDrops, "data", ["Nothing related"])
+        //   }
+
+        //   setTimeout(()=>{
+        //     element.className = element.className.replace(/ invisible/g, "")
+        //     if(includingTitles.length>0) {
+        //       element.children[1].children[0].style.animationDuration = `${element.offsetWidth/10}s` // picking titles in titles-wrapper
+        //     } else {
+        //       element.children[1].children[0].style.animationDuration = "0s"
+        //     }
+        //   },10)
+        // }
       },
     }
   }
