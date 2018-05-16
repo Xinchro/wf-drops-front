@@ -19,6 +19,7 @@ let app = new Vue({
     typingTimeout: {},
     usedBreadcrumb: false,
     gaLoaded: false,
+    dataURL: "https://data.warframedrops.info",
   },
   watch :{
   },
@@ -71,7 +72,7 @@ let app = new Vue({
             }
           }
 
-          xmlHttp.open("GET", `https://wf-drops-data.xinchronize.com/${name}.json?=${new Date(new Date().getTime()).toLocaleString()}`, true) // true for asynchronous
+          xmlHttp.open("GET", `${this.dataURL}/${name}.json?=${new Date(new Date().getTime()).toLocaleString()}`, true) // true for asynchronous
           xmlHttp.send(null)
         } else {
           reject("No name to fetch.")
