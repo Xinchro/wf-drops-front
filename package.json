@@ -8,7 +8,7 @@
     "sync:live": "aws s3 sync ./ s3://search.warframedrops.info",
     "sync:staging": "aws s3 sync ./ s3://staging.warframedrops.info",
     "host:data": "http-server tmp -p 8080 --cors",
-    "host:client": "http-server src/client -p 80",
+    "host:client": "http-server . -p 80",
     "build:watch": "npm run css",
     "watch:all": "watch-spawn -i -p \"./**/*.+(js|scss|html)\" npm run build:watch",
     "dev": "run-p watch:all host:data host:client",
